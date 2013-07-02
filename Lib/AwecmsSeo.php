@@ -23,7 +23,7 @@ class AwecmsSeo implements CakeEventListener {
 	}
 	
 	public function initialize($event) {
-		$Controller =& $event->subject();
+		$Controller = $event->subject();
 		if (Configure::read('AwecmsSeo.meta.autoload')) {
 			$Controller->helpers['Meta'] = array('className' => 'AwecmsSeo.AwecmsSeoMeta');
 		}
