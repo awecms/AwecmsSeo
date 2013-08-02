@@ -77,7 +77,8 @@ class SeoController extends AwecmsSeoAppController {
 		
 		$urls = array();
 		if (!empty($config['models'])) {
-			foreach ($config['models'] as $key => $options) {
+			$models = Hash::normalize($config['models']);
+			foreach ($models as $key => $options) {
 				list($plugin, $modelName) = pluginSplit($key);
 				$options = Hash::merge($config['default'], $options);
 				
@@ -104,7 +105,7 @@ class SeoController extends AwecmsSeoAppController {
 						}
 					}
 					$url = Router::url(array(
-						'plugin' => strtolower($plugin),
+						'plugin' => Inflector::underscore($plugin),
 						'controller' => $options['controller'],
 						'action' => $options['view'],
 						$id,
@@ -120,7 +121,16 @@ class SeoController extends AwecmsSeoAppController {
 				}
 			}
 		}
-		$urls = Hash::merge($urls, $config['urls']);
+		$staticUrls = Hash::normalize($config['urls']);
+		$default = array(
+			'lastmod' => $config['default']['lastmod'],
+			'changefreq' => $config['default']['changefreq'],
+			'priority' => $config['default']['priority'],
+		);
+		foreach ($staticUrls as $url => &$options) {
+			$options = array_merge($default, (array)$options);
+		}
+		$urls = Hash::merge($urls, $staticUrls);
 		$this->set(compact('urls'));
 	}
 	

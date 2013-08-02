@@ -16,6 +16,7 @@ App::uses('Hash', 'Utility');
 App::uses('String', 'Utility');
 App::uses('ClassRegistry', 'Utility');
 App::uses('AppHelper', 'View/Helper');
+App::uses('AwecmsString', 'Awecms.Lib');
 
 class AwecmsSeoMetaHelper extends AppHelper {
 
@@ -55,6 +56,9 @@ class AwecmsSeoMetaHelper extends AppHelper {
 			$this->AwecmsSeoMeta = ClassRegistry::init('AwecmsSeo.AwecmsSeoMeta');
 			$config = (array) Configure::read('AwecmsSeo.meta');
 			$this->settings = Hash::normalize(Hash::merge($config, $this->settings));
+			if (!empty($this->settings['actions'])) {
+				$this->settings['actions'] = Hash::normalize($this->settings['actions']);
+			}
 			$this->_init = true;
 		}
 	}
@@ -65,23 +69,23 @@ class AwecmsSeoMetaHelper extends AppHelper {
 	
 	public function setupTags() {
 		$this->_init();
-		if (!$this->settings['actions']) {
+		if (empty($this->settings['actions'])) {
 			return;
 		}
-		
+
 		$controller = $this->_View->request['controller'];
 		$action = $this->_View->request['action'];
 		$key = $controller . '.' . $action;
-		if (!isset($this->settings['actions'][$key])) {
+		if (!array_key_exists($key, $this->settings['actions'])) {
 			return;
 		}
 		$options = Hash::merge($this->settings['defaults']['actions'], $this->settings['actions'][$key]);
-		
+
 		$model = $options['model'];
 		if (empty($model)) {
 			$model = Inflector::classify($this->_View->request['controller']);
 		}
-		
+
 		$path = $options['path'];
 		if ($path === null && $action === 'view') {
 			$path = Inflector::variable($model) . '.' . $model;
@@ -134,8 +138,15 @@ class AwecmsSeoMetaHelper extends AppHelper {
 	protected function _metaValue($type, &$value, $pageData, $options) {
 		if (empty($value) && !empty($options[$type]['field']) && !empty($pageData[$options[$type]['field']])) {
 			$value = trim($pageData[$options[$type]['field']]);
-			if ($options[$type]['html']) {
-				$value = trim(htmlspecialchars_decode(strip_tags($value)));
+			if ($options[$type]['html'] && !empty($value)) {
+				$value = AwecmsString::htmlToText($value);
+				/*$value = strip_tags($value);
+
+				$newValue = html_entity_decode($value);
+				if (empty($value)) {
+					$newValue = htmlspecialchars_decode(strip_tags($value));
+				}
+				$value = trim($newValue);*/
 			}
 		}
 		if (empty($value) && !empty($options[$type]['default'])) {
